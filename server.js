@@ -78,7 +78,9 @@ function getUserInput() {
     } else if(user_input == "Add Role"){
       addRole();
     }else if(user_input == "Remove Employee"){
-      removeEmployee();    
+      removeEmployee(); 
+    }else if(user_input == "Remove Department"){  
+      removeDeparment(); 
     }else {
       db.end();
       return;
@@ -299,7 +301,29 @@ function displayAllRoles() {
     }
 
     //==========delete ================
+    
+function removeDeparment(){
+  db.promise().query("select * from department").then(result => { 
+    let allDept = [];
+    allDept = result[0].map(item=> `${item.dept_name} (${item.id})`);
+    
+    inquirer.prompt([{
+      type:"list",
+      name:"selectedDept",
+      message:"Select a department to be deleted",
 
+      choices: allDept
+    }]).then(answer=>{
+      const selectedDept = answer.selectedDept;
+      const deptId = selectedDept.substring(selectedDept.indexOf('(')+1 ,selectedDept.indexOf(')'));
+      db.promise().query(`delete from department where id = ${deptId}`).then(result =>{
+         console.log("=======The selected department has been deleted=======");
+         displayAllDept();
+      });
+    });
+
+  });
+}
     async function removeEmployee(){
       var employees = await getEmployeeNames();
       employees.push("All Employees");

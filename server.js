@@ -54,7 +54,7 @@ const questions = [{
 
 
 
-getUserInput();
+//getUserInput();
 function getUserInput() {
   console.log("get user input function");
   inquirer.prompt(questions).then(response => {
@@ -86,6 +86,37 @@ function getUserInput() {
 
 
 }
+const result2 = updateEmployee();
+console.log(result2);
+//=============update an employee role
+async function updateEmployee(){
+    const allEmpSqlStmt = "select id from employee";
+    const result = await promiseDB.query(allEmpSqlStmt);
+    //console.log(result);
+    return result
+}
+// //=============update an employee role
+// async function updateEmployee(){
+//     const allEmpSqlStmt = "select id, first_name, last_name from employee order by id";
+//     const result = await promiseDB.query(allEmpSqlStmt);
+//     const employees = result[0].map(item=> `${item.first_name} ${item.last_name} (${item.id})`);
+
+//     inquirer.prompt([{
+//       type: "list",
+//       message: "Select the emplyee to be updated",
+//       choices: employees,
+//       name: "empId"
+//     }]).then(empAnswer =>{
+//         const selectedEmpId = empAnswer.empId;
+//         inquirer.prompt([{
+//           type:"input",
+//           message: "Type the new Role of the selected Employee"
+//         }]).then(roleAnswer =>{
+//             const newRole = roleAnswer.role
+//         });
+//     });
+// }
+
 //===============add=================
 function addEmployee() {
 

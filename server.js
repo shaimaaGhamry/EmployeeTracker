@@ -54,7 +54,7 @@ const questions = [{
 
 
 
-//getUserInput();
+getUserInput();
 function getUserInput() {
   console.log("get user input function");
   inquirer.prompt(questions).then(response => {
@@ -77,6 +77,9 @@ function getUserInput() {
 
     } else if(user_input == "Add Role"){
       addRole();
+    }else if(user_input == "Remove Employee"){
+      
+    
     }else {
       db.end();
       return;
@@ -86,36 +89,44 @@ function getUserInput() {
 
 
 }
-const result2 = updateEmployee();
-console.log(result2);
+
 //=============update an employee role
 async function updateEmployee(){
-    const allEmpSqlStmt = "select id from employee";
+    const allEmpSqlStmt = "select id, first_name, last_name from employee order by id";
     const result = await promiseDB.query(allEmpSqlStmt);
-    //console.log(result);
-    return result
-}
-// //=============update an employee role
-// async function updateEmployee(){
-//     const allEmpSqlStmt = "select id, first_name, last_name from employee order by id";
-//     const result = await promiseDB.query(allEmpSqlStmt);
-//     const employees = result[0].map(item=> `${item.first_name} ${item.last_name} (${item.id})`);
+    const employees = result[0].map(item=> `${item.first_name} ${item.last_name} (${item.id})`);
 
-//     inquirer.prompt([{
-//       type: "list",
-//       message: "Select the emplyee to be updated",
-//       choices: employees,
-//       name: "empId"
-//     }]).then(empAnswer =>{
-//         const selectedEmpId = empAnswer.empId;
-//         inquirer.prompt([{
-//           type:"input",
-//           message: "Type the new Role of the selected Employee"
-//         }]).then(roleAnswer =>{
-//             const newRole = roleAnswer.role
-//         });
-//     });
-// }
+    const allRoleSqlStmt = "select * from role";
+    const allRoleResult = await promiseDB.query(allRoleSqlStmt);
+    const roles = allRoleResult[0].map(item => `${item.title} (${item.id})`);
+
+    console.log(employees);
+    console.log(roles);
+    inquirer.prompt([{
+      type: "list",
+      message: "Select the employee to be updated",
+      choices: employees,
+      name: "employee"
+    },{
+      type: "list",
+      message: "Select the role to be updated",
+      choices: roles,
+      name: "role"
+
+    }]).then(answer =>{
+        const selectedEmp = answer.employee;
+        const selectedRole = answer.role;
+        const empId = selectedEmp.substring(selectedEmp.indexOf('(')+1,selectedEmp.indexOf(')'));
+        const roleId = selectedRole.substring(selectedRole.indexOf('(') +1, selectedRole.indexOf(')'));
+
+        const updateSqlStmt = `update employee set role_id = ${roleId} where id = ${empId} `;
+        promiseDB.query(updateSqlStmt).then(result =>{
+          console.log("=======The Employee has been updated==============");
+          displayAllEmployees();
+        });
+        
+    });
+}
 
 //===============add=================
 function addEmployee() {
@@ -168,6 +179,7 @@ function addEmployee() {
 
               let addEmpSqlStmt = `insert into employee(first_name, last_name, role_id, manager_id) values ("${first_name}", "${last_name}", ${role}, ${manager_id})`
               db.promise().query(addEmpSqlStmt).then(result =>{
+                  console.log("=========The Employee has been added =========");
                   displayAllEmployees();
               });
           });
@@ -195,7 +207,8 @@ function addEmployee() {
         const dept_name = response.dept_name;
         let sqlStmt = `insert into department(dept_name) values ("${dept_name}")`;
         db.promise().query(sqlStmt)
-          .then(result => {
+          .then(result => {                 
+            console.log("=========The Department has been added =========");
             displayAllDept();
           })
           .catch(err => console.error(err));
@@ -237,6 +250,7 @@ function addRole(){
           ///=========insert the role to database
           let addRoleSqlStmt = `insert into role(title, dept_id, salary) values("${title}", ${dept_id}, ${salary})`;
           db.promise().query(addRoleSqlStmt).then(result=>{
+            console.log("======= The Role has been added =======");
             displayAllRoles();
           });
       });
@@ -245,33 +259,14 @@ function addRole(){
   });
 }
 
-// const temppp = getAllRolesTitles2();
-// console.log("====");
-// console.log(temppp);
-// console.log("====")
-// getAllRolesTitles2();
-
 
 //==========display all ============
- function getAllRolesTitles() {
-      let sqlStmt = "select title from role";
-      db.promise().query(sqlStmt).then(result => {
-        return result[0].map(item => { return item.title });
-      }).catch(err => console.log(err));
-    }
-
- async function getAllRolesTitles2() {
-      let sqlStmt = "select title from role";
-      try {
-        const result = await db.promise().query(sqlStmt);
-        return result[0].map(item => { return item.title });
-      } catch (err) {
-        console.log(err);
-      }
-
-    }
 function displayAllEmployees() {
-      let sqlStmt = "select * from employee join department on employee.dept_id =department.idselect employee.id, employee.first_name, employee.last_name, role.title, department.dept_name,  role.salary , employee.manager_id from employee join employee_db.role on employee.role_id = employee_db.role.id join department on role.dept_id = department.id;";
+      let sqlStmt = `select employee.id, employee.first_name, employee.last_name, role.title, department.dept_name,  role.salary , employee.manager_id 
+      from employee join employee_db.role 
+      on employee.role_id = employee_db.role.id 
+      join department 
+      on role.dept_id = department.id`;
 
       db.promise().query(sqlStmt)
         .then(result => {
@@ -280,6 +275,9 @@ function displayAllEmployees() {
         });
 
     }
+
+    // =========== display all dept
+
  function displayAllDept() {
       let sqlStmt = "select * from department";
 
@@ -290,6 +288,7 @@ function displayAllEmployees() {
         });
     }
 
+    //======display all roles
 function displayAllRoles() {
       let sqlStmt = "select * from role";
 
@@ -300,6 +299,7 @@ function displayAllRoles() {
         });
     }
 
+/////////////////////////////////////////////////////////////
 
 function getUserInputAgain() {
 

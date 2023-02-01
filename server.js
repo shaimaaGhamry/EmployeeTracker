@@ -78,8 +78,7 @@ function getUserInput() {
     } else if(user_input == "Add Role"){
       addRole();
     }else if(user_input == "Remove Employee"){
-      
-    
+      removeEmployee();    
     }else {
       db.end();
       return;
@@ -299,6 +298,55 @@ function displayAllRoles() {
         });
     }
 
+    //==========delete ================
+
+    async function removeEmployee(){
+      var employees = await getEmployeeNames();
+      employees.push("All Employees");
+
+      inquirer.prompt([{
+        type: "list",
+        name: "selectedEmployee",
+        message: "Select the employee to be deleted",
+        choices: employees
+      }]).then(answer => {
+        let selectedEmp = answer.selectedEmployee;
+        if( selectedEmp == "All Employees"){
+          db.query("delete from employee").then((err,res) =>{
+            if (err) throw err;
+            console.log("ALL EMPLOYEES ARE DELETED");
+          });
+        }else{
+          const empId = selectedEmp.substring(selectedEmp.indexOf('(')+1, selectedEmp.indexOf(')'));
+          db.query(`delete  from employee where id =${empId}`, (err, res)=>{
+            if (err) throw err;
+            console.log(" ==== The selected Emplyee has been deleted ===");
+            displayAllEmployees();
+
+          });
+
+        }
+      });
+    }
+
+   
+function getEmployeeNames(){
+      var empNames = [];
+
+      return new Promise((resolve, reject) => {
+        db.query("select * from employee", function(err,res){
+          if (err) throw err;
+    
+          for (var i = 0; i < res.length; i++) {
+              empNames.push(`${res[i].first_name} ${res[i].last_name} (${[res[i].id]}) `);
+          }
+          // cb(roleList);
+          resolve(empNames);
+        });
+      }).then((response) => {
+        return response;
+      });
+    }
 /////////////////////////////////////////////////////////////
 
 function getUserInputAgain() {

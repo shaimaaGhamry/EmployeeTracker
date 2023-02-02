@@ -56,7 +56,6 @@ const questions = [{
 
 getUserInput();
 function getUserInput() {
-  console.log("get user input function");
   inquirer.prompt(questions).then(response => {
     const user_input = response.user_input;
     
@@ -81,6 +80,8 @@ function getUserInput() {
       removeEmployee(); 
     }else if(user_input == "Remove Department"){  
       removeDeparment(); 
+    }else if(user_input == "Update Employee Role") {
+      updateEmployeeRole();
     }else {
       db.end();
       return;
@@ -92,7 +93,7 @@ function getUserInput() {
 }
 
 //=============update an employee role
-async function updateEmployee(){
+async function updateEmployeeRole(){
     const allEmpSqlStmt = "select id, first_name, last_name from employee order by id";
     const result = await promiseDB.query(allEmpSqlStmt);
     const employees = result[0].map(item=> `${item.first_name} ${item.last_name} (${item.id})`);
@@ -101,8 +102,7 @@ async function updateEmployee(){
     const allRoleResult = await promiseDB.query(allRoleSqlStmt);
     const roles = allRoleResult[0].map(item => `${item.title} (${item.id})`);
 
-    console.log(employees);
-    console.log(roles);
+    
     inquirer.prompt([{
       type: "list",
       message: "Select the employee to be updated",
@@ -165,7 +165,7 @@ function addEmployee() {
         //==========choose the manager
         let managerSqlStmt = "select id, first_name, last_name from employee";
         db.promise().query(managerSqlStmt).then(result => {
-          const managers = result[0].map(item => { return item.id });
+          const managers = result[0].map(item => { return `${item.first_name} ${item.last_name} (${item.id})` });
 
 
           inquirer.prompt([{
@@ -174,11 +174,13 @@ function addEmployee() {
             name: "emp_manager",
             choices: managers
           }]).then(response => {
-              manager_id = response.emp_manager;
+              let selectedEmp = response.emp_manager;
+              manager_id = selectedEmp.substring(selectedEmp.indexOf('(')+1, selectedEmp.indexOf(')'))
 
         //===========insert the employee to db
 
               let addEmpSqlStmt = `insert into employee(first_name, last_name, role_id, manager_id) values ("${first_name}", "${last_name}", ${role}, ${manager_id})`
+              console.log(addEmpSqlStmt);
               db.promise().query(addEmpSqlStmt).then(result =>{
                   console.log("=========The Employee has been added =========");
                   displayAllEmployees();
@@ -263,11 +265,10 @@ function addRole(){
 
 //==========display all ============
 function displayAllEmployees() {
-      let sqlStmt = `select employee.id, employee.first_name, employee.last_name, role.title, department.dept_name,  role.salary , employee.manager_id 
+      let sqlStmt = `select employee.id, employee.first_name, employee.last_name, dept_id, role.title, role.salary , employee.manager_id 
       from employee join employee_db.role 
       on employee.role_id = employee_db.role.id 
-      join department 
-      on role.dept_id = department.id`;
+      `;
 
       db.promise().query(sqlStmt)
         .then(result => {
